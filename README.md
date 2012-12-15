@@ -28,7 +28,7 @@ Luz currently works best on Ubuntu 11.10.  It runs on Ubuntu 12.04 if you provid
 
 1. Clone this repository.
 
-2. Install dependencies as described in README.
+2. Install dependencies as described in the INSTALL file.
 
 3. Run 'make' in the root directory to build Input Manager and Spectrum Analyzer
 
