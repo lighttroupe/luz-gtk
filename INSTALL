@@ -4,7 +4,7 @@
 #
 # To satisfy Luz dependencies on Ubuntu use:
 
-sudo apt-get install ruby libgtk2-ruby librmagick-ruby libcairo-ruby libsdl-ruby libinline-ruby imagemagick libopengl-ruby1.8 libserialport-ruby1.8 libvte-ruby1.8 ffmpeg libgst-ruby1.8
+sudo apt-get install ruby libgtk2-ruby librmagick-ruby libcairo-ruby libsdl-ruby imagemagick libopengl-ruby1.8 libserialport-ruby1.8 libvte-ruby1.8 ffmpeg libgst-ruby1.8
 
 #
 # Compiling Helper Applications
