@@ -38,6 +38,7 @@ HandTracker::HandTracker()
 
 bool HandTracker::init_leap()
 {
+	get_leap_controller().addListener( *this );
 	return false;
 }
 
@@ -62,6 +63,39 @@ int HandTracker::human_number_to_user_id(uint human_number)
 			return id;
 	}
 	return 0;
+}
+
+Leap::Controller& HandTracker::get_leap_controller()
+{
+		static Leap::Controller s_controller;
+		return  s_controller;
+}
+
+void HandTracker::onInit(const Leap::Controller&)
+{
+	printf("leap:onInit\n");
+}
+
+void HandTracker::onConnect(const Leap::Controller&)
+{
+	printf("leap:onConnect\n");
+}
+
+void HandTracker::onDisconnect(const Leap::Controller&)
+{
+	printf("leap:onDisconnect\n");
+}
+
+void HandTracker::onFocusGained(const Leap::Controller&)
+{
+}
+
+void HandTracker::onFocusLost(const Leap::Controller&)
+{
+}
+
+void HandTracker::onFrame(const Leap::Controller& controller)
+{
 }
 
 void HandTracker::set_human_number_for_user_id(int id, uint human_number)

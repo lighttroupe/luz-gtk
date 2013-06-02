@@ -2,6 +2,9 @@
 
 #include "message-bus.h"
 
+#include "Leap.h"
+//#include "LeapUtilGL.h"
+
 #define ADDRESS_BUFFER_SIZE (1000)
 
 #define MAX_DEPTH (10000)
@@ -30,11 +33,19 @@ typedef struct {
 		limits_left_hip_angle, limits_right_hip_angle;
 } THuman;
 
-class HandTracker
+class HandTracker : public Leap::Listener
 {
 public:
 	HandTracker();
 	virtual ~HandTracker();
+
+	static Leap::Controller& get_leap_controller();
+	virtual void onInit(const Leap::Controller&);
+	virtual void onConnect(const Leap::Controller&);
+	virtual void onDisconnect(const Leap::Controller&);
+	virtual void onFocusGained(const Leap::Controller&);
+	virtual void onFocusLost(const Leap::Controller&);
+	virtual void onFrame(const Leap::Controller& controller);
 
 	void update();
 	void draw();
