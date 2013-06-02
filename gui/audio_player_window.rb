@@ -19,7 +19,7 @@ class AudioPlayerWindow < GladeWindow
 		super('audio_player_window', :widgets => [:play_button_image_container, :file_chooser_button, :progress_bar_hscale, :volumebutton])
 
 		#
-		# Socket
+		# Socket for sending OpenSoundControl
 		#
 		@socket = UDPSocket.new.set_reuse_address_flag
 		@socket.bind(Socket::INADDR_ANY, 0)
@@ -40,10 +40,6 @@ class AudioPlayerWindow < GladeWindow
 				@last_progress = @current_progress
 			end
 		}
-
-#		@audio_player.on_duration_changed {
-#			@duration_label.text = sprintf('%3.3f secs', @audio_player.duration_in_ms.to_f / 1000.0)
-#		}
 
 		#
 		# Play/Pause button
@@ -70,8 +66,9 @@ class AudioPlayerWindow < GladeWindow
 			@audio_player.seek_to_ms(@progress_bar_hscale.value * @audio_player.duration_in_ms)
 		}
 
-
-		# volume button
+		#
+		# Volume Button
+		#
 		@volumebutton.set_value(1.0)
 		@volumebutton.signal_connect('value-changed') { |widget, value| @audio_player.volume = value }		# value is 0.0-1.0
 	end
@@ -98,10 +95,7 @@ class AudioPlayerWindow < GladeWindow
 	end
 
 	def send_progress(progress)
-		# create OSC message
 		message = OSC::Message.new("Audio / Progress", 'f', progress)
-
-		# send it out
 		@socket.send(message.encode, 0, MESSAGE_BUS_IP, MESSAGE_BUS_PORT)		# 0 means calculate the length
 	end
 end
