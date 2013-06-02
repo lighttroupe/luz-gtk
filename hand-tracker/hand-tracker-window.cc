@@ -2,13 +2,13 @@
 #include <gtkmm/gl/widget.h>
 
 #include "application.h"
-#include "body-tracker-window.h"
+#include "hand-tracker-window.h"
 
 #include "utils.h"
 
-#define WINDOW_TITLE_FORMAT ("Luz Body Tracker - Human %02d")
-#define WINDOW_TITLE_FORMAT_RANGE ("Luz Body Tracker - Human %02d to %02d")
-#define WINDOW_TITLE_FORMAT_UNINITIALIZED ("Luz Body Tracker - Kinect Not Found")
+#define WINDOW_TITLE_FORMAT ("Luz Hand Tracker - Human %02d")
+#define WINDOW_TITLE_FORMAT_RANGE ("Luz Hand Tracker - Human %02d to %02d")
+#define WINDOW_TITLE_FORMAT_UNINITIALIZED ("Luz Hand Tracker - Leap Not Found")
 
 #define MSG_ENABLE_BROADCAST ("Send to Network")
 #define MSG_CONFIRM_QUIT ("Confirm Quit?")
@@ -18,7 +18,7 @@
 
 #define WINDOW_MINIMUM_WIDTH (500)
 
-BodyTrackerWindow::BodyTrackerWindow()
+HandTrackerWindow::HandTrackerWindow()
 	: m_window_vbox(),
 		m_first_human_number_spinbutton(),
 		m_last_human_number_spinbutton(),
@@ -33,7 +33,7 @@ BodyTrackerWindow::BodyTrackerWindow()
 	m_quit_dialog->add_button(Gtk::StockID("gtk-cancel"), FALSE);
 	m_quit_dialog->add_button(Gtk::StockID("gtk-quit"), TRUE);
 	m_quit_dialog->set_default_response(FALSE);
-	m_quit_dialog->signal_response().connect(sigc::mem_fun(*this, &BodyTrackerWindow::on_quit_dialog_response));
+	m_quit_dialog->signal_response().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_quit_dialog_response));
 
 	set_border_width(0);
 	set_resizable(true);
@@ -46,7 +46,7 @@ BodyTrackerWindow::BodyTrackerWindow()
 
 	// Window dragging (in usused space)
 	add_events(Gdk::BUTTON_PRESS_MASK);
-	signal_button_press_event().connect(sigc::mem_fun(*this, &BodyTrackerWindow::on_window_button_press_event));
+	signal_button_press_event().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_window_button_press_event));
 
 	//
 	// Toolbar is the first item in vbox
@@ -61,7 +61,7 @@ BodyTrackerWindow::BodyTrackerWindow()
 		m_first_human_number_spinbutton.set_increments(1.0, 1.0);
 		m_first_human_number_spinbutton.set_value(m_first_human_number);
 		m_toolbar.pack_start(m_first_human_number_spinbutton, false, true);		// booleans for expand / fill extra space
-		m_first_human_number_spinbutton.signal_value_changed().connect(sigc::mem_fun(*this, &BodyTrackerWindow::on_first_human_number_spinbutton_changed));
+		m_first_human_number_spinbutton.signal_value_changed().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_first_human_number_spinbutton_changed));
 
 		// Toolbar: spacer to push furth items to the far right
 		Gtk::Label* to_label = new Gtk::Label("to");
@@ -74,7 +74,7 @@ BodyTrackerWindow::BodyTrackerWindow()
 		m_last_human_number_spinbutton.set_increments(1.0, 1.0);
 		m_last_human_number_spinbutton.set_value(m_last_human_number);
 		m_toolbar.pack_start(m_last_human_number_spinbutton, false, true);		// booleans for expand / fill extra space
-		m_last_human_number_spinbutton.signal_value_changed().connect(sigc::mem_fun(*this, &BodyTrackerWindow::on_last_human_number_spinbutton_changed));
+		m_last_human_number_spinbutton.signal_value_changed().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_last_human_number_spinbutton_changed));
 
 		// Toolbar: spacer to push furth items to the far right
 		Gtk::Label* spacer = new Gtk::Label();
@@ -82,7 +82,7 @@ BodyTrackerWindow::BodyTrackerWindow()
 
 		// Toolbar: Broadcast Togglebutton
 		m_broadcast_button.set_mode(true);		// draw_indicator=true makes it draw as a checkbox (brilliant API here...)
-		m_broadcast_button.signal_clicked().connect(sigc::mem_fun(*this, &BodyTrackerWindow::on_broadcast_changed));
+		m_broadcast_button.signal_clicked().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_broadcast_changed));
 		m_toolbar.pack_start(m_broadcast_button, false, false);
 
 		// Toolbar: Fullscreen Button
@@ -90,7 +90,7 @@ BodyTrackerWindow::BodyTrackerWindow()
 		m_fullscreen_button.set_image(*(new Gtk::Image(Gtk::Stock::FULLSCREEN, *(new Gtk::IconSize(Gtk::ICON_SIZE_SMALL_TOOLBAR)))));
 		m_fullscreen_button.set_relief(Gtk::RELIEF_NONE);
 		m_toolbar.pack_start(m_fullscreen_button, false, true);		// booleans mean: expand and fill extra space
-		m_fullscreen_button.signal_clicked().connect(sigc::mem_fun(*this, &BodyTrackerWindow::on_fullscreen_button_clicked));
+		m_fullscreen_button.signal_clicked().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_fullscreen_button_clicked));
 
 	m_window_vbox.pack_start(m_toolbar, false, false);
 
@@ -99,37 +99,37 @@ BodyTrackerWindow::BodyTrackerWindow()
 	//
 	m_drawing_area.set_size_request(256, 256);
 	m_window_vbox.pack_start(m_drawing_area, true, true);
-	m_drawing_area.signal_expose_event().connect(sigc::mem_fun(*this, &BodyTrackerWindow::on_drawing_area_expose_event), false);
+	m_drawing_area.signal_expose_event().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_drawing_area_expose_event), false);
 	m_drawing_area.add_events(Gdk::BUTTON_PRESS_MASK);
-	m_drawing_area.signal_button_press_event().connect(sigc::mem_fun(*this, &BodyTrackerWindow::on_drawing_area_button_press_event), false);
+	m_drawing_area.signal_button_press_event().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_drawing_area_button_press_event), false);
 	m_drawing_area.add_events(Gdk::BUTTON_RELEASE_MASK);
-	m_drawing_area.signal_button_release_event().connect(sigc::mem_fun(*this, &BodyTrackerWindow::on_drawing_area_button_press_event), false);
+	m_drawing_area.signal_button_release_event().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_drawing_area_button_press_event), false);
 	m_drawing_area.add_events(Gdk::POINTER_MOTION_MASK);
-	m_drawing_area.signal_motion_notify_event().connect(sigc::mem_fun(*this, &BodyTrackerWindow::on_motion_notify_event), false);
+	m_drawing_area.signal_motion_notify_event().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_motion_notify_event), false);
 
 	// Window dragging (in usused space)
 	add_events(Gdk::BUTTON_PRESS_MASK);
-	signal_button_press_event().connect(sigc::mem_fun(*this, &BodyTrackerWindow::on_window_button_press_event));
+	signal_button_press_event().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_window_button_press_event));
 
 	// Key presses
-	signal_key_press_event().connect(sigc::mem_fun(*this, &BodyTrackerWindow::on_key_press_event));
+	signal_key_press_event().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_key_press_event));
 
 	//
-	// OpenNI Tracker
+	// Tracker
 	//
-	m_body_tracker = new BodyTracker();
+	m_hand_tracker = new HandTracker();
 
 	update_window_title();
 }
 
-bool BodyTrackerWindow::on_motion_notify_event(GdkEventMotion* event)
+bool HandTrackerWindow::on_motion_notify_event(GdkEventMotion* event)
 {
 	if(event->y < m_toolbar.get_height() * 2) {
 		m_toolbar.show();
 	}
 }
 
-bool BodyTrackerWindow::on_key_press_event(GdkEventKey* event)
+bool HandTrackerWindow::on_key_press_event(GdkEventKey* event)
 {
 	if(event->type == GDK_KEY_PRESS && event->keyval == GDK_Escape) {
 		if(m_is_fullscreen) {
@@ -148,10 +148,10 @@ bool BodyTrackerWindow::on_key_press_event(GdkEventKey* event)
 	return false;
 }
 
-void BodyTrackerWindow::update_window_title()
+void HandTrackerWindow::update_window_title()
 {
 	char buffer[201];
-	if(!m_body_tracker->is_openni_initialized())
+	if(!m_hand_tracker->is_leap_initialized())
 		snprintf(buffer, 200, WINDOW_TITLE_FORMAT_UNINITIALIZED);
 	else if(m_first_human_number == m_last_human_number)
 		snprintf(buffer, 200, WINDOW_TITLE_FORMAT, m_first_human_number);
@@ -162,7 +162,7 @@ void BodyTrackerWindow::update_window_title()
 }
 
 // Track fullscreen state
-bool BodyTrackerWindow::on_window_state_event(GdkEventWindowState* event)
+bool HandTrackerWindow::on_window_state_event(GdkEventWindowState* event)
 {
 	m_is_fullscreen = (event->new_window_state & GDK_WINDOW_STATE_FULLSCREEN) == GDK_WINDOW_STATE_FULLSCREEN;
 	return true;
@@ -171,7 +171,7 @@ bool BodyTrackerWindow::on_window_state_event(GdkEventWindowState* event)
 //
 // Window interaction
 //
-void BodyTrackerWindow::on_fullscreen_button_clicked()
+void HandTrackerWindow::on_fullscreen_button_clicked()
 {
 	if(m_is_fullscreen)
 		this->unfullscreen();
@@ -179,7 +179,7 @@ void BodyTrackerWindow::on_fullscreen_button_clicked()
 		this->fullscreen();
 }
 
-bool BodyTrackerWindow::on_window_button_press_event(GdkEventButton* event)
+bool HandTrackerWindow::on_window_button_press_event(GdkEventButton* event)
 {
 	if((event->type == GDK_BUTTON_PRESS) && (event->button == 1)) {
 		// Clicking anywhere on the window initiates a window drag
@@ -194,30 +194,30 @@ bool BodyTrackerWindow::on_window_button_press_event(GdkEventButton* event)
 	return false;		// not handled
 }
 
-void BodyTrackerWindow::on_first_human_number_spinbutton_changed()
+void HandTrackerWindow::on_first_human_number_spinbutton_changed()
 {
 	m_first_human_number = m_first_human_number_spinbutton.get_value_as_int();
 	if(m_first_human_number > m_last_human_number)
 		m_last_human_number_spinbutton.set_value(m_first_human_number);
 
-	m_body_tracker->set_max_humans((m_last_human_number - m_first_human_number) + 1);
-	m_body_tracker->set_human_number_offset(m_first_human_number - 1);
+	m_hand_tracker->set_max_humans((m_last_human_number - m_first_human_number) + 1);
+	m_hand_tracker->set_human_number_offset(m_first_human_number - 1);
 
 	update_window_title();
 }
 
-void BodyTrackerWindow::on_last_human_number_spinbutton_changed()
+void HandTrackerWindow::on_last_human_number_spinbutton_changed()
 {
 	m_last_human_number = m_last_human_number_spinbutton.get_value_as_int();
 	if(m_last_human_number < m_first_human_number)
 		m_first_human_number_spinbutton.set_value(m_last_human_number);
 
-	m_body_tracker->set_max_humans((m_last_human_number - m_first_human_number) + 1);
+	m_hand_tracker->set_max_humans((m_last_human_number - m_first_human_number) + 1);
 
 	update_window_title();
 }
 
-bool BodyTrackerWindow::on_drawing_area_button_press_event(GdkEventButton* event)
+bool HandTrackerWindow::on_drawing_area_button_press_event(GdkEventButton* event)
 {
 	if((event->type == GDK_BUTTON_PRESS) && (event->button == 1)) {
 		begin_move_drag(event->button, event->x_root, event->y_root, event->time);
@@ -226,7 +226,7 @@ bool BodyTrackerWindow::on_drawing_area_button_press_event(GdkEventButton* event
 	return false;	// not handled
 }
 
-void BodyTrackerWindow::on_broadcast_changed()
+void HandTrackerWindow::on_broadcast_changed()
 {
 	g_message_bus->set_broadcast(m_broadcast_button.get_active());
 }
@@ -234,12 +234,12 @@ void BodyTrackerWindow::on_broadcast_changed()
 //
 // Drawing
 //
-void BodyTrackerWindow::trigger_redraw()
+void HandTrackerWindow::trigger_redraw()
 {
 	m_drawing_area.trigger_redraw();
 }
 
-bool BodyTrackerWindow::on_drawing_area_expose_event(GdkEventExpose* event)
+bool HandTrackerWindow::on_drawing_area_expose_event(GdkEventExpose* event)
 {
 	draw();
 	return true;	// handled
@@ -248,39 +248,39 @@ bool BodyTrackerWindow::on_drawing_area_expose_event(GdkEventExpose* event)
 //
 // Update Tracking
 //
-void BodyTrackerWindow::update()
+void HandTrackerWindow::update()
 {
-	m_body_tracker->update();
+	m_hand_tracker->update();
 }
 
 //
 // Rendering
 //
-void BodyTrackerWindow::draw()
+void HandTrackerWindow::draw()
 {
 	m_drawing_area.gl_begin();
-	m_body_tracker->draw();
+	m_hand_tracker->draw();
 	m_drawing_area.gl_end();
 }
 
 //
 // Send OSC
 //
-void BodyTrackerWindow::send()
+void HandTrackerWindow::send()
 {
-	m_body_tracker->send();
+	m_hand_tracker->send();
 }
 
 //
 // Closing Window, Quiting
 //
-bool BodyTrackerWindow::on_delete_event(GdkEventAny *event)
+bool HandTrackerWindow::on_delete_event(GdkEventAny *event)
 {
 	m_quit_dialog->show();
 	return true;
 }
 
-void BodyTrackerWindow::on_quit_dialog_response(int response_id)
+void HandTrackerWindow::on_quit_dialog_response(int response_id)
 {
 	if(response_id == TRUE) {
 		hide();
@@ -289,6 +289,6 @@ void BodyTrackerWindow::on_quit_dialog_response(int response_id)
 	m_quit_dialog->hide();
 }
 
-BodyTrackerWindow::~BodyTrackerWindow()
+HandTrackerWindow::~HandTrackerWindow()
 {
 }

@@ -5,13 +5,13 @@
 using namespace std;
 
 #include "my-drawing-area.h"
-#include "body-tracker.h"
+#include "hand-tracker.h"
 
-class BodyTrackerWindow : public Gtk::Window
+class HandTrackerWindow : public Gtk::Window
 {
 public:
-	BodyTrackerWindow();
-	virtual ~BodyTrackerWindow();
+	HandTrackerWindow();
+	virtual ~HandTrackerWindow();
 
 	void trigger_redraw();
 	void update();
@@ -52,7 +52,7 @@ private:
 	//
 	// Data
 	//
-	BodyTracker* m_body_tracker;
+	HandTracker* m_hand_tracker;
 
 	bool m_is_fullscreen;
 

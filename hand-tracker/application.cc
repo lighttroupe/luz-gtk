@@ -1,7 +1,7 @@
 #include <math.h>
 
 #include "application.h"
-#include "body-tracker-window.h"
+#include "hand-tracker-window.h"
 
 //---------------------------------------------------------------------------
 // Globals
@@ -9,21 +9,21 @@
 bool g_time_to_quit = false;
 
 MessageBus* g_message_bus = NULL;
-BodyTrackerWindow* g_body_tracker_window = NULL;
+HandTrackerWindow* g_hand_tracker_window = NULL;
 
 bool on_tooltip_button_press_event(GdkEventButton* event)
 {
-	if(g_body_tracker_window->is_visible()) {
-		g_body_tracker_window->hide();
+	if(g_hand_tracker_window->is_visible()) {
+		g_hand_tracker_window->hide();
 	}
 	else {
-		g_body_tracker_window->present();
+		g_hand_tracker_window->present();
 	}
 }
 
 int main(int argc, char *argv[])
 {
-	chdir("body-tracker");
+	chdir("hand-tracker");
 
 	Gtk::RC::add_default_file(RC_FILE_PATH);
 	Gtk::Main app(argc, argv);
@@ -46,8 +46,8 @@ int main(int argc, char *argv[])
 	//
 	// Main Window
 	//
-	g_body_tracker_window = new BodyTrackerWindow();
-	g_body_tracker_window->show_all();
+	g_hand_tracker_window = new HandTrackerWindow();
+	g_hand_tracker_window->show_all();
 
 	glutInit(&argc, argv);
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glEnableClientState(GL_VERTEX_ARRAY);		// OpenNI drawing code uses vertex arrays
+	// glEnableClientState(GL_VERTEX_ARRAY);
 
 	Glib::Timer* timer = new Glib::Timer();
 	timer->start();
@@ -66,16 +66,14 @@ int main(int argc, char *argv[])
 	double last_frame_time = 0.0;
 
 	GMainLoop* p_main_loop = g_main_loop_new(NULL, false);
-	
-	
+
 	while(g_time_to_quit == false) {
-	
 		double time = timer->elapsed();
 
 		// has enough time elapsed?
 		if((time - last_frame_time) > frame_time) {
-			g_body_tracker_window->update();
-			g_body_tracker_window->trigger_redraw();
+			g_hand_tracker_window->update();
+			g_hand_tracker_window->trigger_redraw();
 			last_frame_time = time;
 
 			// actual redraw happens in the Gtk callback
@@ -83,7 +81,7 @@ int main(int argc, char *argv[])
 				Gtk::Main::iteration(false);
 			}
 
-			g_body_tracker_window->send();
+			g_hand_tracker_window->send();
 		}
 		else {
 			// sleep for a while to avoid spiking the CPU
@@ -91,6 +89,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	delete g_body_tracker_window;
+	delete g_hand_tracker_window;
 	return 0;
 }

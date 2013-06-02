@@ -1,35 +1,6 @@
 #include <math.h>
 #include "utils.h"
 
-float calculate_angle(XnPoint3D& joint, XnPoint3D& joint2, XnPoint3D& joint3)
-{
-	JointVector om;
-	JointVector oa;
-
-	om.x = joint.X - joint2.X;
-	om.y = joint.Y - joint2.Y;
-	om.z = joint.Z - joint2.Z;
-
-	oa.x = joint3.X - joint2.X;
-	oa.y = joint3.Y - joint2.Y;
-	oa.z = joint3.Z - joint2.Z;
-
-	double v1_magnitude = sqrt(om.x * om.x + om.y * om.y + om.z * om.z);
-	double v2_magnitude = sqrt(oa.x * oa.x + oa.y * oa.y + oa.z * oa.z);
-
-	om.x = om.x / v1_magnitude;
-	om.y = om.y / v1_magnitude;
-	om.z = om.z / v1_magnitude;
-	oa.x = oa.x / v2_magnitude;
-	oa.y = oa.y / v2_magnitude;
-	oa.z = oa.z / v2_magnitude;
-
-	double theta = acos(om.x*oa.x + om.y*oa.y + om.z * oa.z);
-	double angle_in_degrees = theta * 180 / PI;
-
-	return (1.0 - (angle_in_degrees / 180.0));	// angle_zero_to_one
-}
-
 float scale_and_expand_limits(float value, TLimits* limits, float starting_width)
 {
 	if(!limits->init) {

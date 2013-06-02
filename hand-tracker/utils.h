@@ -1,8 +1,6 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
-#include <XnOpenNI.h>
-
 #include <GL/glut.h>
 
 #define PI (3.1415926535897932384)
@@ -27,8 +25,6 @@ typedef struct
 	float y;
 	float z;
 } JointVector;
-
-float calculate_angle(XnPoint3D& joint, XnPoint3D& joint2, XnPoint3D& joint3);
 
 float scale_and_expand_limits(float value, TLimits* limits, float starting_width=0.0);
 

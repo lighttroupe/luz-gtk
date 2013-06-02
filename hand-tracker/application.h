@@ -33,9 +33,7 @@ using namespace std;    // saves us typing std:: before vector
 
 #include <lo/lo.h>
 
-#include <XnOpenNI.h>
-#include <XnCodecIDs.h>
-#include <XnCppWrapper.h>
+// TODO add Leap includes
 
 #include "message-bus.h"
 
@@ -43,16 +41,16 @@ using namespace std;    // saves us typing std:: before vector
 
 #define STANDARD_WIDGET_SPACING (6)
 
-#define APPLICATION_NAME ("Body Tracker")
-#define APPLICATION_VERSION ("0.13")
-#define APPLICATION_COPYRIGHT ("Copyright 2011 Ian McIntosh, Ether Davis")
-#define UNIQUE_APP_GUID ("org.openanswers.body-tracker")
+#define APPLICATION_NAME ("Hand Tracker")
+#define APPLICATION_VERSION ("0.01")
+#define APPLICATION_COPYRIGHT ("Copyright 2013 Ian McIntosh")
+#define UNIQUE_APP_GUID ("org.openanswers.hand-tracker")
 
-#define RC_FILE_PATH ("body-tracker.rc")
+#define RC_FILE_PATH ("hand-tracker.rc")
 #define XML_PATH ("openni-config.xml")
 
-#define PNG_ICON_FILE_PATH ("body-tracker-status-icon.png")
-#define SVG_ICON_FILE_PATH ("body-icon.svg")
+#define PNG_ICON_FILE_PATH ("hand-tracker-status-icon.png")
+#define SVG_ICON_FILE_PATH ("hand-icon.svg")
 
 #define GL_WIN_SIZE_X 720
 #define GL_WIN_SIZE_Y 480
