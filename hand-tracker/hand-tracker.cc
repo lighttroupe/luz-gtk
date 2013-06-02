@@ -39,7 +39,7 @@ HandTracker::HandTracker()
 bool HandTracker::init_leap()
 {
 	get_leap_controller().addListener( *this );
-	return false;
+	return true;
 }
 
 //
@@ -86,16 +86,52 @@ void HandTracker::onDisconnect(const Leap::Controller&)
 	printf("leap:onDisconnect\n");
 }
 
+
 void HandTracker::onFocusGained(const Leap::Controller&)
 {
+	printf("leap:onFocusGainer\n");
 }
 
 void HandTracker::onFocusLost(const Leap::Controller&)
 {
+	printf("leap:onFocusLost\n");
 }
 
 void HandTracker::onFrame(const Leap::Controller& controller)
 {
+	printf("leap:onFrame\n");
+	Leap::Frame frame = controller.frame();
+
+	char address_buffer[ADDRESS_BUFFER_SIZE+1];
+
+//	std::cout << "Frame id: " << frame.id()
+//						<< ", timestamp: " << frame.timestamp()
+//						<< ", hands: " << frame.hands().count()
+//						<< ", fingers: " << frame.fingers().count()
+//						<< ", tools: " << frame.tools().count() << std::endl;
+
+	if (!frame.hands().empty()) {
+		// Get the first hand
+		const Leap::Hand hand = frame.hands()[0];
+		THuman* human = &m_humans[0];
+		int human_number = 1;
+		float fuzzy;
+
+		fuzzy = scale_and_expand_limits(hand.palmPosition().x, &human->limits_position_x);
+		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Position / X", human_number);
+		g_message_bus->send_float(address_buffer, fuzzy);
+
+		fuzzy = scale_and_expand_limits(hand.palmPosition().y, &human->limits_position_y);
+		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Position / Y", human_number);
+		g_message_bus->send_float(address_buffer, fuzzy);
+
+		fuzzy = scale_and_expand_limits(hand.palmPosition().z, &human->limits_position_z);
+		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Position / Z", human_number);
+		g_message_bus->send_float(address_buffer, fuzzy);
+
+//		std::cout << "Hand sphere radius: " << hand.sphereRadius()
+//							<< " mm, palm position: " << hand.palmPosition() << std::endl;
+	}
 }
 
 void HandTracker::set_human_number_for_user_id(int id, uint human_number)
@@ -134,7 +170,11 @@ void HandTracker::draw()
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	glClearColor(UNINITIALIZED_BACKGROUND_COLOR);
+	if(is_leap_initialized()) {
+		glClearColor(BACKGROUND_COLOR);
+	} else {
+		glClearColor(UNINITIALIZED_BACKGROUND_COLOR);
+	}
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glDisable(GL_TEXTURE_2D);

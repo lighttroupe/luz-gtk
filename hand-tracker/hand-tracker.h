@@ -18,19 +18,9 @@ typedef struct {
 	bool tracked;
 	uint human_number;
 
-	// Heaaaaaaaaaad, shoulders, knees and toes, knees and toes!
-	TLimits3
-		//limits_head, limits_torso,
-		limits_left_shoulder, limits_left_elbow, limits_left_hand,
-		limits_right_shoulder, limits_right_elbow, limits_right_hand,
-		limits_left_hip, limits_left_knee, limits_left_foot,
-		limits_right_hip, limits_right_knee, limits_right_foot;
-
-	TLimits
-	  limits_left_shoulder_angle, limits_right_shoulder_angle,
-		limits_left_elbow_angle, limits_right_elbow_angle,
-		limits_left_knee_angle, limits_right_knee_angle,
-		limits_left_hip_angle, limits_right_hip_angle;
+	TLimits limits_position_x;
+	TLimits limits_position_y;
+	TLimits limits_position_z;
 } THuman;
 
 class HandTracker : public Leap::Listener
