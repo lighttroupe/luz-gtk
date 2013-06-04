@@ -83,10 +83,12 @@ void HandTracker::onConnect(const Leap::Controller& controller)
 {
 	printf("leap:connected\n");
 
+/*
 	controller.enableGesture(Leap::Gesture::TYPE_CIRCLE);
 	controller.enableGesture(Leap::Gesture::TYPE_KEY_TAP);
 	controller.enableGesture(Leap::Gesture::TYPE_SCREEN_TAP);
 	controller.enableGesture(Leap::Gesture::TYPE_SWIPE);
+*/
 }
 
 void HandTracker::onDisconnect(const Leap::Controller&)
@@ -160,8 +162,11 @@ void HandTracker::onFrame(const Leap::Controller& controller)
 		fuzzy = scale_and_expand_limits_with_clamp(hand.sphereRadius(), 75.0, 100.0, &human->limits_sphere_radius);
 		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Sphere Radius", human_number);
 		g_message_bus->send_float(address_buffer, fuzzy);
+
+		// TODO: first finger is pointer
 	}
 
+/*
 		// Get gestures
 	const Leap::GestureList gestures = frame.gestures();
 	for (int g = 0; g < gestures.count(); ++g) {
@@ -225,6 +230,7 @@ void HandTracker::onFrame(const Leap::Controller& controller)
 				break;
 		}
 	}
+*/
 }
 
 void HandTracker::set_human_number_for_user_id(int id, uint human_number)
