@@ -16,7 +16,8 @@ A live motion graphics editor and performer.
 - **Luz Audio Player**: plays music and sends song progress percentage to Luz (Ruby, GStreamer)
 - **Luz Input Manager**: sends live input device data to Luz (C++, Gtk+, XOrg API, libwiimote, SDL Input)
 - **Luz Spectrum Analyzer**: sends audio information to Luz (C++, OpenGL, FFTW)
-- **Luz Body Tracker**: sends motion-tracked human data to Luz (C++, OpenGL, OpenNI+NITE)
+- **Luz Hand Tracker**: sends hand position, angle, and finger data to Luz (C++, Leap)
+- **Luz Body Tracker**: sends human skeleton data to Luz (C++, OpenGL, OpenNI+NITE)
 
 # Getting Luz
 
