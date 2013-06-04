@@ -6,8 +6,8 @@
 
 #include "utils.h"
 
-#define WINDOW_TITLE_FORMAT ("Luz Hand Tracker - Human %02d")
-#define WINDOW_TITLE_FORMAT_RANGE ("Luz Hand Tracker - Human %02d to %02d")
+#define WINDOW_TITLE_FORMAT ("Luz Hand Tracker - Hand %02d")
+#define WINDOW_TITLE_FORMAT_RANGE ("Luz Hand Tracker - Hand %02d to %02d")
 #define WINDOW_TITLE_FORMAT_UNINITIALIZED ("Luz Hand Tracker - Leap Not Found")
 
 #define MSG_ENABLE_BROADCAST ("Send to Network")
@@ -16,7 +16,8 @@
 #define MIN_HUMAN_NUMBER (1)
 #define MAX_HUMAN_NUMBER (8)
 
-#define WINDOW_MINIMUM_WIDTH (500)
+#define WINDOW_MINIMUM_WIDTH (400)
+#define WINDOW_MINIMUM_HEIGHT (64)
 
 HandTrackerWindow::HandTrackerWindow()
 	: m_window_vbox(),
@@ -38,12 +39,12 @@ HandTrackerWindow::HandTrackerWindow()
 	set_border_width(0);
 	set_resizable(true);
 
-	set_size_request(WINDOW_MINIMUM_WIDTH, (WINDOW_MINIMUM_WIDTH * 3) / 4);		// this sets the startup size
+//	set_size_request(WINDOW_MINIMUM_WIDTH, WINDOW_MINIMUM_HEIGHT);		// this sets the startup size
 
 	// One vbox to rule them all
 	m_window_vbox.set_spacing(0);		// aesthetics
 	add(m_window_vbox);
-
+ 
 	// Window dragging (in usused space)
 	add_events(Gdk::BUTTON_PRESS_MASK);
 	signal_button_press_event().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_window_button_press_event));
@@ -86,17 +87,18 @@ HandTrackerWindow::HandTrackerWindow()
 		m_toolbar.pack_start(m_broadcast_button, false, false);
 
 		// Toolbar: Fullscreen Button
-		m_fullscreen_button.set_tooltip_text("Toggle Fullscreen");
-		m_fullscreen_button.set_image(*(new Gtk::Image(Gtk::Stock::FULLSCREEN, *(new Gtk::IconSize(Gtk::ICON_SIZE_SMALL_TOOLBAR)))));
-		m_fullscreen_button.set_relief(Gtk::RELIEF_NONE);
-		m_toolbar.pack_start(m_fullscreen_button, false, true);		// booleans mean: expand and fill extra space
-		m_fullscreen_button.signal_clicked().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_fullscreen_button_clicked));
+		//m_fullscreen_button.set_tooltip_text("Toggle Fullscreen");
+		//m_fullscreen_button.set_image(*(new Gtk::Image(Gtk::Stock::FULLSCREEN, *(new Gtk::IconSize(Gtk::ICON_SIZE_SMALL_TOOLBAR)))));
+		//m_fullscreen_button.set_relief(Gtk::RELIEF_NONE);
+		//m_toolbar.pack_start(m_fullscreen_button, false, true);		// booleans mean: expand and fill extra space
+		//m_fullscreen_button.signal_clicked().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_fullscreen_button_clicked));
 
 	m_window_vbox.pack_start(m_toolbar, false, false);
 
 	//
 	// DrawingArea
 	//
+/*
 	m_drawing_area.set_size_request(256, 256);
 	m_window_vbox.pack_start(m_drawing_area, true, true);
 	m_drawing_area.signal_expose_event().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_drawing_area_expose_event), false);
@@ -106,6 +108,7 @@ HandTrackerWindow::HandTrackerWindow()
 	m_drawing_area.signal_button_release_event().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_drawing_area_button_press_event), false);
 	m_drawing_area.add_events(Gdk::POINTER_MOTION_MASK);
 	m_drawing_area.signal_motion_notify_event().connect(sigc::mem_fun(*this, &HandTrackerWindow::on_motion_notify_event), false);
+*/
 
 	// Window dragging (in usused space)
 	add_events(Gdk::BUTTON_PRESS_MASK);
@@ -236,7 +239,7 @@ void HandTrackerWindow::on_broadcast_changed()
 //
 void HandTrackerWindow::trigger_redraw()
 {
-	m_drawing_area.trigger_redraw();
+	//m_drawing_area.trigger_redraw();
 }
 
 bool HandTrackerWindow::on_drawing_area_expose_event(GdkEventExpose* event)
@@ -258,9 +261,9 @@ void HandTrackerWindow::update()
 //
 void HandTrackerWindow::draw()
 {
-	m_drawing_area.gl_begin();
-	m_hand_tracker->draw();
-	m_drawing_area.gl_end();
+	//m_drawing_area.gl_begin();
+	//m_hand_tracker->draw();
+	//m_drawing_area.gl_end();
 }
 
 //
