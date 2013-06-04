@@ -157,12 +157,9 @@ void HandTracker::onFrame(const Leap::Controller& controller)
 		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Yaw", human_number);
 		g_message_bus->send_float(address_buffer, fuzzy);
 
-		fuzzy = scale_and_expand_limits(hand.sphereRadius(), &human->limits_sphere_radius);
+		fuzzy = scale_and_expand_limits_with_clamp(hand.sphereRadius(), 75.0, 100.0, &human->limits_sphere_radius);
 		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Sphere Radius", human_number);
 		g_message_bus->send_float(address_buffer, fuzzy);
-
-//		std::cout << "Hand sphere radius: " << hand.sphereRadius()
-//							<< " mm, palm position: " << hand.palmPosition() << std::endl;
 	}
 
 		// Get gestures
