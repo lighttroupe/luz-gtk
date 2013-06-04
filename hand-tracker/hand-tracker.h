@@ -21,6 +21,12 @@ typedef struct {
 	TLimits limits_position_x;
 	TLimits limits_position_y;
 	TLimits limits_position_z;
+
+	TLimits limits_roll;
+	TLimits limits_pitch;
+	TLimits limits_yaw;
+
+	TLimits limits_sphere_radius;
 } THuman;
 
 class HandTracker : public Leap::Listener

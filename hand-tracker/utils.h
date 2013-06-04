@@ -27,6 +27,7 @@ typedef struct
 } JointVector;
 
 float scale_and_expand_limits(float value, TLimits* limits, float starting_width=0.0);
+float scale_and_expand_limits_with_clamp(float value, float min, float max, TLimits* limits, float starting_width=0.0);
 
 unsigned int get_closest_power_of_two(unsigned int n);
 

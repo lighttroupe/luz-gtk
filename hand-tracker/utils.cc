@@ -24,6 +24,14 @@ float scale_and_expand_limits(float value, TLimits* limits, float starting_width
 	return (float)(value - limits->min) / (float)range;
 }
 
+float scale_and_expand_limits_with_clamp(float value, float min, float max, TLimits* limits, float starting_width)
+{
+	if(value < min) { value = min; }
+	if(value > max) { value = max; }
+
+	return scale_and_expand_limits(value, limits, starting_width);
+}
+
 unsigned int get_closest_power_of_two(unsigned int n)
 {
 	unsigned int m = 2;

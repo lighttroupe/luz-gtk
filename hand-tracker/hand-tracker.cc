@@ -24,6 +24,9 @@ static float HUMAN_COLORS[NUM_HUMAN_COLORS][4] = {
 	{0.500, 0.500, 0.000, 1.0},
 };
 
+#define DEG_TO_RAD (0.0174532925f)
+#define RAD_TO_DEG (57.295779513f)
+
 //
 // HandTracker
 //
@@ -73,33 +76,37 @@ Leap::Controller& HandTracker::get_leap_controller()
 
 void HandTracker::onInit(const Leap::Controller&)
 {
-	printf("leap:onInit\n");
+	printf("leap:initialized\n");
 }
 
-void HandTracker::onConnect(const Leap::Controller&)
+void HandTracker::onConnect(const Leap::Controller& controller)
 {
-	printf("leap:onConnect\n");
+	printf("leap:connected\n");
+
+	controller.enableGesture(Leap::Gesture::TYPE_CIRCLE);
+	controller.enableGesture(Leap::Gesture::TYPE_KEY_TAP);
+	controller.enableGesture(Leap::Gesture::TYPE_SCREEN_TAP);
+	controller.enableGesture(Leap::Gesture::TYPE_SWIPE);
 }
 
 void HandTracker::onDisconnect(const Leap::Controller&)
 {
-	printf("leap:onDisconnect\n");
+	printf("leap:disconnected\n");
 }
 
 
 void HandTracker::onFocusGained(const Leap::Controller&)
 {
-	printf("leap:onFocusGainer\n");
+	printf("leap:focused\n");
 }
 
 void HandTracker::onFocusLost(const Leap::Controller&)
 {
-	printf("leap:onFocusLost\n");
+	printf("leap:unfocused\n");
 }
 
 void HandTracker::onFrame(const Leap::Controller& controller)
 {
-	printf("leap:onFrame\n");
 	Leap::Frame frame = controller.frame();
 
 	char address_buffer[ADDRESS_BUFFER_SIZE+1];
@@ -129,8 +136,97 @@ void HandTracker::onFrame(const Leap::Controller& controller)
 		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Position / Z", human_number);
 		g_message_bus->send_float(address_buffer, fuzzy);
 
+		// Get the hand's normal vector and direction
+		const Leap::Vector normal = hand.palmNormal();
+		const Leap::Vector direction = hand.direction();
+
+		// Calculate the hand's pitch, roll, and yaw angles
+		//std::cout << "hand pitch: " << direction.pitch() << " rad, " << std::endl
+							//<< "hand  roll: " << normal.roll() << " rad, " << std::endl
+							//<< "hand   yaw: " << direction.yaw() << " rad" << std::endl << std::endl;
+
+		fuzzy = scale_and_expand_limits_with_clamp(direction.pitch(), -0.9, 0.9, &human->limits_pitch);
+		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Pitch", human_number);
+		g_message_bus->send_float(address_buffer, fuzzy);
+
+		fuzzy = scale_and_expand_limits_with_clamp(normal.roll(), -1.0, 1.0, &human->limits_roll);
+		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Roll", human_number);
+		g_message_bus->send_float(address_buffer, fuzzy);
+
+		fuzzy = scale_and_expand_limits_with_clamp(direction.yaw(), -0.8, 0.8, &human->limits_yaw);
+		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Yaw", human_number);
+		g_message_bus->send_float(address_buffer, fuzzy);
+
+		fuzzy = scale_and_expand_limits(hand.sphereRadius(), &human->limits_sphere_radius);
+		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Sphere Radius", human_number);
+		g_message_bus->send_float(address_buffer, fuzzy);
+
 //		std::cout << "Hand sphere radius: " << hand.sphereRadius()
 //							<< " mm, palm position: " << hand.palmPosition() << std::endl;
+	}
+
+		// Get gestures
+	const Leap::GestureList gestures = frame.gestures();
+	for (int g = 0; g < gestures.count(); ++g) {
+		Leap::Gesture gesture = gestures[g];
+
+		switch (gesture.type()) {
+			case Leap::Gesture::TYPE_CIRCLE:
+			{
+				Leap::CircleGesture circle = gesture;
+				std::string clockwiseness;
+
+				if (circle.pointable().direction().angleTo(circle.normal()) <= PI/4) {
+					clockwiseness = "clockwise";
+				} else {
+					clockwiseness = "counterclockwise";
+				}
+
+				// Calculate angle swept since last frame
+				float sweptAngle = 0;
+				if (circle.state() != Leap::Gesture::STATE_START) {
+					Leap::CircleGesture previousUpdate = Leap::CircleGesture(controller.frame(1).gesture(circle.id()));
+					sweptAngle = (circle.progress() - previousUpdate.progress()) * 2 * PI;
+				}
+				std::cout << "Circle id: " << gesture.id()
+									<< ", state: " << gesture.state()
+									<< ", progress: " << circle.progress()
+									<< ", radius: " << circle.radius()
+									<< ", angle " << sweptAngle * RAD_TO_DEG
+									<<  ", " << clockwiseness << std::endl;
+				break;
+			}
+			case Leap::Gesture::TYPE_SWIPE:
+			{
+				Leap::SwipeGesture swipe = gesture;
+				std::cout << "Swipe id: " << gesture.id()
+									<< ", state: " << gesture.state()
+									<< ", direction: " << swipe.direction()
+									<< ", speed: " << swipe.speed() << std::endl;
+				break;
+			}
+			case Leap::Gesture::TYPE_KEY_TAP:
+			{
+				Leap::KeyTapGesture tap = gesture;
+				std::cout << "Key Tap id: " << gesture.id()
+									<< ", state: " << gesture.state()
+									<< ", position: " << tap.position()
+									<< ", direction: " << tap.direction()<< std::endl;
+				break;
+			}
+			case Leap::Gesture::TYPE_SCREEN_TAP:
+			{
+				Leap::ScreenTapGesture screentap = gesture;
+				std::cout << "Screen Tap id: " << gesture.id()
+									<< ", state: " << gesture.state()
+									<< ", position: " << screentap.position()
+									<< ", direction: " << screentap.direction()<< std::endl;
+				break;
+			}
+			default:
+				std::cout << "Unknown gesture type." << std::endl;
+				break;
+		}
 	}
 }
 
