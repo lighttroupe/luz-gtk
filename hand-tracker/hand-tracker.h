@@ -77,6 +77,8 @@ private:
 	THuman m_humans[MAX_USERS_TRACKED];
 	uint m_human_number_offset;
 
+	uint m_hands_present;
+
 	bool m_leap_initialized;
 	bool m_draw_depth_map;
 };

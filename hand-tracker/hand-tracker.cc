@@ -32,7 +32,8 @@ static float HUMAN_COLORS[NUM_HUMAN_COLORS][4] = {
 //
 HandTracker::HandTracker()
 	: m_max_humans(DEFAULT_MAX_HUMANS),
-		m_human_number_offset(0)
+		m_human_number_offset(0),
+		m_hands_present(0)
 {
 	memset(m_humans, 0, sizeof(m_humans));
 
@@ -96,7 +97,6 @@ void HandTracker::onDisconnect(const Leap::Controller&)
 	printf("leap:disconnected\n");
 }
 
-
 void HandTracker::onFocusGained(const Leap::Controller&)
 {
 	printf("leap:focused\n");
@@ -119,11 +119,30 @@ void HandTracker::onFrame(const Leap::Controller& controller)
 //						<< ", fingers: " << frame.fingers().count()
 //						<< ", tools: " << frame.tools().count() << std::endl;
 
-	if (!frame.hands().empty()) {
+	int hands_present = frame.hands().count();
+
+	// Limit number of hands this sensor will respond to
+	if(hands_present > get_max_humans()) {
+		hands_present = get_max_humans();
+	}
+
+	while(m_hands_present > hands_present) {
+		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Present", m_hands_present + get_human_number_offset());
+		g_message_bus->send_int(address_buffer, 0);
+		m_hands_present--;
+	}
+
+	while(m_hands_present < hands_present) {
+		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Present", m_hands_present + get_human_number_offset() + 1);
+		g_message_bus->send_int(address_buffer, 1);
+		m_hands_present++;
+	}
+
+	for(int i=0 ; i<hands_present ; i++) {
 		// Get the first hand
-		const Leap::Hand hand = frame.hands()[0];
-		THuman* human = &m_humans[0];
-		int human_number = 1;
+		const Leap::Hand hand = frame.hands()[i];
+		THuman* human = &m_humans[i];
+		int human_number = 1 + i + get_human_number_offset();
 		float fuzzy;
 
 		fuzzy = scale_and_expand_limits(hand.palmPosition().x, &human->limits_position_x);
@@ -165,6 +184,9 @@ void HandTracker::onFrame(const Leap::Controller& controller)
 
 		// TODO: first finger is pointer
 	}
+
+	// Store for next frame
+	m_hands_present = hands_present;
 
 /*
 		// Get gestures
