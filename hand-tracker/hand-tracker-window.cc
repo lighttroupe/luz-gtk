@@ -267,14 +267,6 @@ void HandTrackerWindow::draw()
 }
 
 //
-// Send OSC
-//
-void HandTrackerWindow::send()
-{
-	m_hand_tracker->send();
-}
-
-//
 // Closing Window, Quiting
 //
 bool HandTrackerWindow::on_delete_event(GdkEventAny *event)

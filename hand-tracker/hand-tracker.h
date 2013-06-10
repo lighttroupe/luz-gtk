@@ -45,7 +45,6 @@ public:
 
 	void update();
 	void draw();
-	void send();
 
 	uint get_max_humans() { return m_max_humans; }
 	void set_max_humans(uint max_humans) { m_max_humans = (max_humans <= MAX_USERS_TRACKED) ? max_humans : MAX_USERS_TRACKED; }
@@ -56,21 +55,6 @@ public:
 	bool is_leap_initialized() { return m_leap_initialized; }
 
 private:
-	//
-	// Human Number tracking
-	//
-	uint next_human_number();
-	void set_human_number_for_user_id(int id, uint human_number);
-	uint user_id_to_human_number(int user_id);
-	int human_number_to_user_id(uint human_number);
-	THuman* user_id_to_human(int user_id);
-	void reassign_human_number(uint human_number);
-
-	TLimits3 m_limits_stage;
-
-	//
-	// OpenNI
-	//
 	bool init_leap();
 
 	uint m_max_humans;
@@ -80,5 +64,4 @@ private:
 	uint m_hands_present;
 
 	bool m_leap_initialized;
-	bool m_draw_depth_map;
 };

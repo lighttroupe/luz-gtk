@@ -3,6 +3,8 @@
 #include "application.h"
 #include "hand-tracker-window.h"
 
+#define FRAMES_PER_SECOND (30.0)
+
 //---------------------------------------------------------------------------
 // Globals
 //---------------------------------------------------------------------------
@@ -62,7 +64,7 @@ int main(int argc, char *argv[])
 	Glib::Timer* timer = new Glib::Timer();
 	timer->start();
 
-	double frame_time = 1.0 / 30.0;
+	double frame_time = 1.0 / FRAMES_PER_SECOND;
 	double last_frame_time = 0.0;
 
 	GMainLoop* p_main_loop = g_main_loop_new(NULL, false);
@@ -80,8 +82,6 @@ int main(int argc, char *argv[])
 			while(Gtk::Main::events_pending()) {
 				Gtk::Main::iteration(false);
 			}
-
-			g_hand_tracker_window->send();
 		}
 		else {
 			// sleep for a while to avoid spiking the CPU
