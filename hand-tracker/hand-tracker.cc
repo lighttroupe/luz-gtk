@@ -143,8 +143,8 @@ void HandTracker::onFrame(const Leap::Controller& controller)
 		// How high are we, within the Leap's cone of vision?
 		palm_y = clamp(palm_y, HAND_Y_MIN, HAND_Y_MAX);
 
-		// ...as 0.0 to 1.0
-		float height_fuzzy = clamp((palm_y - HAND_Y_MIN) / (HAND_Y_MAX - HAND_Y_MIN), 0.0, 1.0);
+		// ...as 0.0 to 1.0 (actually 0.1 to 1.0)
+		float height_fuzzy = 0.1 + 0.9 * clamp((palm_y - HAND_Y_MIN) / (HAND_Y_MAX - HAND_Y_MIN), 0.0, 1.0);
 
 		// Scale the X (side to side) and Z (forward to back)
 		float x_min_for_height = HAND_X_MIN * height_fuzzy;
