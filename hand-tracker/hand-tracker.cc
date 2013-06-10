@@ -28,6 +28,18 @@ static float HUMAN_COLORS[NUM_HUMAN_COLORS][4] = {
 #define RAD_TO_DEG (57.295779513f)
 
 //
+// Hardcoded Leap numbers here...
+//
+#define HAND_X_MIN (-600.0)
+#define HAND_X_MAX (600.0)
+
+#define HAND_Y_MIN (100.0)
+#define HAND_Y_MAX (700.0)
+
+#define HAND_Z_MIN (-600.0)
+#define HAND_Z_MAX (600.0)
+
+//
 // HandTracker
 //
 HandTracker::HandTracker()
@@ -103,12 +115,14 @@ void HandTracker::onFrame(const Leap::Controller& controller)
 		hands_present = get_max_humans();
 	}
 
+	// Hands lost?
 	while(m_hands_present > hands_present) {
 		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Present", m_hands_present + get_human_number_offset());
 		g_message_bus->send_int(address_buffer, 0);
 		m_hands_present--;
 	}
 
+	// Hands gained?
 	while(m_hands_present < hands_present) {
 		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Present", m_hands_present + get_human_number_offset() + 1);
 		g_message_bus->send_int(address_buffer, 1);
@@ -116,29 +130,51 @@ void HandTracker::onFrame(const Leap::Controller& controller)
 	}
 
 	for(int i=0 ; i<hands_present ; i++) {
-		// Get the first hand
 		const Leap::Hand hand = frame.hands()[i];
 		THuman* human = &m_humans[i];
 		int human_number = 1 + i + get_human_number_offset();
 		float fuzzy;
 
-		fuzzy = scale_and_expand_limits(hand.palmPosition().x, &human->limits_position_x);
+		// Raw position data
+		float palm_x = hand.palmPosition().x;
+		float palm_y = hand.palmPosition().y;
+		float palm_z = hand.palmPosition().z;
+
+		// How high are we, within the Leap's cone of vision?
+		palm_y = clamp(palm_y, HAND_Y_MIN, HAND_Y_MAX);
+
+		// ...as 0.0 to 1.0
+		float height_fuzzy = clamp((palm_y - HAND_Y_MIN) / (HAND_Y_MAX - HAND_Y_MIN), 0.0, 1.0);
+
+		// Scale the X (side to side) and Z (forward to back)
+		float x_min_for_height = HAND_X_MIN * height_fuzzy;
+		float x_max_for_height = HAND_X_MAX * height_fuzzy;
+
+		float z_min_for_height = HAND_Z_MIN * height_fuzzy;
+		float z_max_for_height = HAND_Z_MAX * height_fuzzy;
+
+		// Transform raw X and Z into appropriate range for given height
+		float palm_x_fuzzy = clamp((palm_x - x_min_for_height) / (x_max_for_height - x_min_for_height), 0.0, 1.0);
+		float palm_z_fuzzy = clamp((palm_z - z_min_for_height) / (z_max_for_height - z_min_for_height), 0.0, 1.0);
+
+		// Z feels better 0 (hand near body) to 1 (hand out)
+		palm_z_fuzzy = 1.0 - palm_z_fuzzy;
+
 		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Position / X", human_number);
-		g_message_bus->send_float(address_buffer, fuzzy);
+		g_message_bus->send_float(address_buffer, palm_x_fuzzy);
 
-		fuzzy = scale_and_expand_limits(hand.palmPosition().y, &human->limits_position_y);
 		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Position / Y", human_number);
-		g_message_bus->send_float(address_buffer, fuzzy);
+		g_message_bus->send_float(address_buffer, height_fuzzy);
 
-		fuzzy = scale_and_expand_limits(hand.palmPosition().z, &human->limits_position_z);
 		snprintf(address_buffer, ADDRESS_BUFFER_SIZE, "Hand %02d / Position / Z", human_number);
-		g_message_bus->send_float(address_buffer, fuzzy);
+		g_message_bus->send_float(address_buffer, palm_z_fuzzy);
 
-		// Get the hand's normal vector and direction
+		//
+		// Send palm pitch, roll, yaw
+		//
 		const Leap::Vector normal = hand.palmNormal();
 		const Leap::Vector direction = hand.direction();
 
-		// Calculate the hand's pitch, roll, and yaw angles
 		//std::cout << "hand pitch: " << direction.pitch() << " rad, " << std::endl
 							//<< "hand  roll: " << normal.roll() << " rad, " << std::endl
 							//<< "hand   yaw: " << direction.yaw() << " rad" << std::endl << std::endl;

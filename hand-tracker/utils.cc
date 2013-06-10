@@ -1,6 +1,17 @@
 #include <math.h>
 #include "utils.h"
 
+float clamp(float value, float min, float max)
+{
+	if(value < min)
+		value = min;
+
+	if(value > max)
+		value = max;
+
+	return value;
+}
+
 float scale_and_expand_limits(float value, TLimits* limits, float starting_width)
 {
 	if(!limits->init) {

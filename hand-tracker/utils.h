@@ -26,6 +26,7 @@ typedef struct
 	float z;
 } JointVector;
 
+float clamp(float value, float min, float max);
 float scale_and_expand_limits(float value, TLimits* limits, float starting_width=0.0);
 float scale_and_expand_limits_with_clamp(float value, float min, float max, TLimits* limits, float starting_width=0.0);
 
