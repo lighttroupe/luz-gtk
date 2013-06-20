@@ -42,9 +42,12 @@ class LuzPerformer
 	include Drawing
 
 	SDL_TO_LUZ_BUTTON_NAMES = {'`' => 'Grave', '\\' => 'Backslash', '[' => 'Left Bracket', ']' => 'Right Bracket', ';' => 'Semicolon', "'" => 'Apostrophe', '/' => 'Slash', '.' => 'Period', ',' => 'Comma', '-' => 'Minus', '=' => 'Equal', 'left ctrl' => 'Left Control', 'right ctrl' => 'Right Control'}
+	ICON_FILE_PATH = 'gui/icons/logo.bmp'
 
 	attr_accessor :width, :height, :fullscreen, :border, :bits_per_pixel, :frames_per_second, :relay_port
 	boolean_accessor :finished, :escape_quits
+
+	TIMING_COUNT = 10
 
 	def initialize
 		@width, @height, @bits_per_pixel = 0, 0, 0		# NOTE: setting bpp to 0 means "current" in SDL
@@ -59,20 +62,18 @@ class LuzPerformer
 		@frames_per_second = 60
 	end
 
+	def toggle_fullscreen!
+		@fullscreen = !@fullscreen
+		set_video_mode
+		init_gl_viewport
+	end
+
 	def create
 		SDL.init(SDL::INIT_VIDEO | SDL::INIT_TIMER)
 		puts "Using SDL version #{SDL::VERSION}"
 
-		@sdl_video_mode_flags = SDL::HWSURFACE | SDL::OPENGL
-		@sdl_video_mode_flags |= SDL::FULLSCREEN if @fullscreen
-		@sdl_video_mode_flags |= SDL::NOFRAME unless @border
-		SDL.setGLAttr(SDL::GL_STENCIL_SIZE, 8) if @stencil_buffer
-
-		@screen = SDL.set_video_mode(@width, @height, @bits_per_pixel, @sdl_video_mode_flags)
-		@width, @height = @screen.w, @screen.h
-
-		# save useful info if we were using bpp=0 ("current")
-		@bits_per_pixel = @screen.bpp if @bits_per_pixel == 0
+		set_video_mode
+		init_gl_viewport
 		puts "Running at #{@screen.w}x#{@screen.h} @ #{@bits_per_pixel}bpp, #{@frames_per_second}fps (max)"
 
 		SDL::WM.set_caption(APP_NAME, '')
@@ -80,10 +81,9 @@ class LuzPerformer
 		#SDL::Mouse.hide		NOTE: using a blank cursor works better with Wacom pads
 		SDL::Mouse.setCursor(SDL::Surface.new(SDL::HWSURFACE,8,8,8,0,0,0,0),1,1,0,1,0,0)
 
-		SDL::Key.disable_key_repeat		# We want one Down and one Up message per key press
+		SDL::WM.icon = SDL::Surface.load_bmp(ICON_FILE_PATH)
 
-		GL.Viewport(0, 0, @width, @height)
-		clear_screen([0.0, 0.0, 0.0, 0.0])
+		SDL::Key.disable_key_repeat		# We want one Down and one Up message per key press
 
 		# Create Luz Engine
 		require 'engine'
@@ -97,6 +97,28 @@ class LuzPerformer
 		$engine.on_render { $engine.render(enable_frame_saving=true) }		# NOTE: We just have one global context, so this renders to it
 	end
 
+	def sdl_video_mode_flags
+		flags = SDL::HWSURFACE | SDL::OPENGL
+		flags |= SDL::FULLSCREEN if @fullscreen
+		flags |= SDL::RESIZABLE if !@fullscreen
+		flags |= SDL::NOFRAME unless @border
+		flags
+	end
+
+	def set_video_mode
+		SDL.setGLAttr(SDL::GL_STENCIL_SIZE, 8) if @stencil_buffer
+		@screen = SDL.set_video_mode(@width, @height, @bits_per_pixel, sdl_video_mode_flags)
+
+		# Save
+		@width, @height = @screen.w, @screen.h
+		@bits_per_pixel = @screen.bpp if @bits_per_pixel == 0
+	end
+
+	def init_gl_viewport
+		GL.Viewport(0, 0, @width, @height)
+		clear_screen([0.0, 0.0, 0.0, 0.0])
+	end
+
 	#
 	# Some hacks for reduced garbage / better performance
 	#
@@ -106,56 +128,90 @@ class LuzPerformer
 	MOUSE_BUTTON_FORMAT = "Mouse %02d / Button %02d"
 	@@mouse_1_button_formatter = Hash.new { |hash, key| hash[key] = sprintf(MOUSE_BUTTON_FORMAT, 1, key) }
 
+	def parse_event(event)
+		case event
+		# Mouse input
+		when SDL::Event2::MouseMotion
+			$engine.on_slider_change(MOUSE_1_X, (event.x / (@width - 1).to_f))
+			$engine.on_slider_change(MOUSE_1_Y, (1.0 - (event.y / (@height - 1).to_f)))
+
+		when SDL::Event2::MouseButtonDown
+			$engine.on_button_down(@@mouse_1_button_formatter[event.button], frame_offset=1)
+
+		when SDL::Event2::MouseButtonUp
+			$engine.on_button_up(@@mouse_1_button_formatter[event.button], frame_offset=1)
+
+		# Keyboard input
+		when SDL::Event2::KeyDown
+			if event.sym == SDL::Key::ESCAPE and escape_quits?
+				#toggle_fullscreen!
+				finished!
+			else
+				$engine.on_button_down(sdl_to_luz_button_name((key_name=SDL::Key.get_key_name(event.sym))), frame_offset=1)
+				if $gui
+					key_name.shift = ((event.mod & SDL::Key::MOD_SHIFT) > 0)
+					key_name.control = ((event.mod & SDL::Key::MOD_CTRL) > 0)
+					key_name.alt = ((event.mod & SDL::Key::MOD_ALT) > 0)
+					$gui.raw_keyboard_input(key_name)
+				end
+			end
+
+		when SDL::Event2::KeyUp
+			$engine.on_button_up(sdl_to_luz_button_name(SDL::Key.get_key_name(event.sym)), frame_offset=1)
+
+		when SDL::Event2::Quit
+			finished!
+		end
+	end
+
 	#
 	# Run Performer (interactive)
 	#
 	def run
-		ms_per_frame = (1000 / @frames_per_second)
-
 		start_time = SDL.getTicks
+		current_frames_per_second = nil
+		frame_number = 1
+		timing_start_ms = start_time
 
 		while not finished?
+			desired_ms_per_frame = (1000 / @frames_per_second)		# NOTE: desired FPS can change at any time
+
 			frame_start_ms = SDL.getTicks
+			timing_start_ms ||= frame_start_ms
 
 			while event = SDL::Event2.poll
-				case event
-
-				# Mouse input
-				when SDL::Event2::MouseMotion
-					$engine.on_slider_change(MOUSE_1_X, (event.x / (@width - 1).to_f))
-					$engine.on_slider_change(MOUSE_1_Y, (1.0 - (event.y / (@height - 1).to_f)))
-
-				when SDL::Event2::MouseButtonDown
-					$engine.on_button_down(@@mouse_1_button_formatter[event.button], frame_offset=1)
-
-				when SDL::Event2::MouseButtonUp
-					$engine.on_button_up(@@mouse_1_button_formatter[event.button], frame_offset=1)
-
-				# Keyboard input
-				when SDL::Event2::KeyDown
-					if event.sym == SDL::Key::ESCAPE and escape_quits?
-						finished!
-					else
-						$engine.on_button_down(sdl_to_luz_button_name(SDL::Key.get_key_name(event.sym)), frame_offset=1)
-					end
-
-				when SDL::Event2::KeyUp
-					$engine.on_button_up(sdl_to_luz_button_name(SDL::Key.get_key_name(event.sym)), frame_offset=1)
-
-				# Window closing, etc.
-				when SDL::Event2::Quit
-					finished!
-				end
+				parse_event(event)
 			end
 
 			#
 			# Render then sleep until time for next frame
 			#
 			$engine.do_frame((frame_start_ms - start_time) / 1000.0)
-			SDL.GL_swap_buffers
 
-			frame_time_ms = SDL.getTicks - frame_start_ms
-			SDL.delay(ms_per_frame - frame_time_ms) if frame_time_ms < ms_per_frame
+			frame_end_ms = SDL.getTicks
+			frame_duration_ms = (frame_end_ms - frame_start_ms)
+
+			SDL.GL_swap_buffers		# note trying to not include swap in fps timing
+			swap_time_ms = SDL.getTicks - frame_end_ms
+
+			# HACK: recalculate so as not to sleep too much
+			frame_end_ms = SDL.getTicks
+			frame_duration_ms = (frame_end_ms - frame_start_ms)
+
+			sleep_time_ms = desired_ms_per_frame - frame_duration_ms
+			SDL.delay(sleep_time_ms) if sleep_time_ms > 3		# for tiny amounts it doesn't make sense
+
+			frames_per_second = 1000.0 / frame_duration_ms
+
+			if frame_number % TIMING_COUNT == 0
+				timing_duration_ms = (frame_end_ms - timing_start_ms)		# we've been timing for many frames
+				timing_duration_in_seconds = timing_duration_ms / 1000.0
+				seconds_per_frame = timing_duration_in_seconds / TIMING_COUNT
+				$env[:current_frames_per_second] = (1.0 / seconds_per_frame).ceil
+				timing_start_ms = frame_end_ms
+			end
+
+			frame_number += 1
 		end
 		SDL.quit
 
