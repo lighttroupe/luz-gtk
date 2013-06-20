@@ -23,12 +23,12 @@ A live motion graphics editor and performer.
 
 Luz currently only runs on Linux.  Help is wanted porting it to OSX.
 
-1. Clone this repository.
+1. *git clone git://github.com/lighttroupe/luz.git*
 
 2. Install dependencies as described in the INSTALL file.
 
-3. Run 'make' in the root directory to build Input Manager and Spectrum Analyzer
+3. Run *make* in the root directory to build Input Manager and Spectrum Analyzer.
 
-4. Optionally run the ./build scripts in utils/video-file, utils/video, and utils/chipmunk.
+4. Optionally run the *./build* scripts in utils/video-file, utils/video, and utils/chipmunk.
 
-5. wget openanswers.org/gtkglext.so
+5. Run *wget openanswers.org/gtkglext.so* to get the Ruby bindings to GtkGL, which are now missing from the RubyGNOME project.
