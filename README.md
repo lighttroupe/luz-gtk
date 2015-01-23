@@ -32,3 +32,8 @@ Luz currently only runs on Linux.  Help is wanted porting it to OSX.
 4. Optionally run the **./build** scripts in utils/video-file, utils/video, and utils/chipmunk.
 
 5. Run **wget openanswers.org/gtkglext.so** to get the Ruby bindings to GtkGL, which are now missing from the RubyGNOME project.
+
+# Unofficial 64 bit DEB packages from openartist.org
+
+http://openartist.org/debian/trusty64/luz_0.92.1~20130620-1_amd64.deb
+http://openartist.org/debian/trusty64/luz-next_20141027-1_amd64.deb
